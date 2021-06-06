@@ -1,0 +1,79 @@
+#!/usr/bin/env zsh
+
+# Save BUFFER and CURSOR to reinsert them after executing a command.
+#
+# When the command is used with an empty BUFFER or with
+# the same BUFFER and CURSOR, it is disabled. This is configurable with
+#
+#   zstyle :jln-save-command-line clean purge # set BUFFER to an empty string
+#   zstyle :jln-save-command-line clean toggle # default
+#   zstyle :jln-save-command-line clean toggle-purge # purge when disabled
+#   zstyle :jln-save-command-line clean no
+#
+# Note also that the style is looked up based on the widget name, so you
+# can bind this function to different widgets to use different patterns:
+#
+#   zle -N jln-purge-command jln-save-command-line
+#   zstyle :jln-purge-command clean purge
+#   bindkey '\e=' jln-purge-command
+
+_jln_cmd_buffer=
+_jln_cmd_cursor=
+_jln_cmd_line_init=
+
+_jln-save-command-line-clean()
+{
+  if [[ -n $_jln_cmd_buffer ]]; then
+    # restore zle-line-init
+    if [[ -z $_jln_cmd_line_init ]]; then
+      functions[zle-line-init]=
+    else
+      eval "zle-line-init () { $_jln_cmd_line_init }"
+    fi
+    _jln_cmd_buffer=
+  fi
+}
+
+jln-save-command-line()
+{
+  emulate -L zsh -o extendedglob
+
+  # deactivated with an empty buffer
+  if [[ -z $BUFFER ]]; then
+    _jln-save-command-line-clean
+    return
+  fi
+
+  local mode
+  zstyle -s :$WIDGET clean mode || mode=toggle
+
+  case $mode in
+    purge)
+      _jln-save-command-line-clean
+      BUFFER=''
+      return;;
+    toggle*)
+      # deactivated when the same
+      if (( _jln_cmd_cursor == CURSOR )) && [[ $_jln_cmd_buffer = $BUFFER ]]; then
+        _jln-save-command-line-clean
+        [[ $mode = 'toggle-purge' ]] && BUFFER=''
+        return
+      fi
+  esac
+
+  _jln-save-command-line-clean
+
+  _jln_cmd_cursor=$CURSOR
+  _jln_cmd_buffer=$BUFFER
+  _jln_cmd_line_init=${functions[zle-line-init]##[[:space:]]#}
+  [[ -z $_jln_cmd_line_init ]] && zle -N zle-line-init
+  eval "zle-line-init () {
+    $_jln_cmd_line_init
+    if [[ -z \$BUFFER ]]; then
+      BUFFER=\$_jln_cmd_buffer
+      CURSOR=$_jln_cmd_cursor
+    fi
+  }"
+}
+
+jln-save-command-line

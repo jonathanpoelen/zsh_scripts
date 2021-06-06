@@ -1,0 +1,29 @@
+#!/usr/bin/env zsh
+
+emulate -L zsh -o extendedglob
+
+local lwords pat
+local -i pad
+
+lwords=(${(Z:n:)LBUFFER})
+pad=${#LBUFFER%%[[:space:]]#}
+
+if (( NUMERIC > 1 )); then
+  if (( NUMERIC > $#lwords )); then
+    CURSOR=0
+  else
+    local -i end=$#lwords numeric=end-numeric
+    if (( pad == $#LBUFFER )) || [[ ${lwords[-1]} = *[[:space:]] ]]; then
+      numeric+=-1
+    fi
+    for ((;numeric <= end; ++numeric)); do
+      pat+='[[:space:]]#'${(q)lwords[numeric]}
+    done
+    eval CURSOR='${#LBUFFER%%'$pat'[[:space:]]#}'
+  fi
+# preceded by spaces or arg with space (abc "d ${cursor})
+elif (( pad == $#LBUFFER )) || [[ ${lwords[-1]} = *[[:space:]] ]] ; then
+  CURSOR=${#LBUFFER%%[[:space:]]#${lwords[-1]}}
+else
+  CURSOR=pad
+fi

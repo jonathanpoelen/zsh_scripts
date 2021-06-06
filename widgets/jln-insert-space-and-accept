@@ -1,0 +1,9 @@
+#!/usr/bin/env zsh
+
+emulate -L zsh
+
+[[ -z $BUFFER ]] && zle up-history
+if [[ $BUFFER != [[:space:]]* ]]; then
+   LBUFFER=" $LBUFFER"
+fi
+zle accept-line

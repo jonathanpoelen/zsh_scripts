@@ -1,0 +1,68 @@
+#!/usr/bin/env zsh
+
+# Launches a minishell so the result inserted as a parameter.
+#
+# modes available:
+# - line: each line is a parameter (default)
+# - column: each line then filter by column
+# - filter: each line then minishell that to manipulate $buf string.
+#           Final result must be in $REPLY
+#
+# other options:
+# - filter expression: use an expression instead of open a minishell
+# - fzf-args string
+#
+#   zstyle :jln-pick mode filter
+#   zstyle :jln-pick filter 'REPLY=${(j:,:)${(f)buf}}' # comma-separated result
+#
+# Note also that the style is looked up based on the widget name, so you
+# can bind this function to different widgets to use different patterns:
+#
+#   zle -N jln-pick-column jln-pick
+#   zstyle :jln-pick-column mode column
+#   bindkey '\e=' jln-pick-column
+
+emulate -L zsh
+
+local REPLY buf mode fzfargs
+
+autoload -U read-from-minibuffer
+read-from-minibuffer 'command: '
+[[ -z $REPLY ]] && return
+
+zstyle -s :$WIDGET fzf-args fzfargs
+local buf=$(eval "$REPLY" | fzf $=fzfargs)
+[[ -z $buf ]] && return
+
+zstyle -s :$WIDGET mode mode || mode=line
+if [[ $mode = 'filter'* ]]; then
+  zstyle -s :$WIDGET filter REPLY || read-from-minibuffer 'filter: '
+  eval $REPLY
+  LBUFFER+=$REPLY
+elif [[ $mode = 'line' ]]; then
+  buf=(${(q)${(f)buf}})
+  LBUFFER+="${(j: :)buf}"
+else
+  local -a view a ns
+  local -i len n
+  while read -A a ; do
+    (( ++n > 5 )) && break
+    len=$#a;
+    for (( i=1 ; i <= len ; ++i )); do
+      [[ -z "${view[$i]}" ]] && view[i]=$'\e[32m'$i$'\e[0m: '
+      view[i]+="${(q)a[$i]}  "
+    done
+  done <<<"$buf"
+
+  ns=(${${(f)"$(fzf $=fzfargs <<<${(F)view})"}/:*})
+  buf=(${(f)buf})
+  len=$#buf
+  for (( i=1 ; i <= len ; ++i )); do
+    view=(${(z)buf[i]})
+    for n in $ns ; do
+      LBUFFER+="${(q)view[n]} "
+    done
+  done
+fi
+
+zle redisplay

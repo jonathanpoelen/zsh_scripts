@@ -1,0 +1,10 @@
+#!/usr/bin/env zsh
+
+emulate -L zsh
+
+autoload -U read-from-minibuffer
+
+local REPLY
+read-from-minibuffer 'command: '
+[[ -z $REPLY ]] && return
+LBUFFER+=$REPLY

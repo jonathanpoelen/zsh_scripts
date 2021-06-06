@@ -1,0 +1,37 @@
+#!/usr/bin/env zsh
+
+# Insert a list of selected files with fzf
+#
+# Files are preceded by their size during selection
+#
+# The default pattern matches all files, but it can be configured as
+#
+#   zstyle :jln-fzf-file-size match '*.mp4'
+#   zstyle :jln-fzf-file-size reverse 'yes'
+#
+# Note also that the style is looked up based on the widget name, so you
+# can bind this function to different widgets to use different patterns:
+#
+#   zle -N fzf-all-file jln-fzf-file-size
+#   zstyle :fzf-all-file match '**/*(^/)'
+#   bindkey '\e=' fzf-all-file
+
+emulate -L zsh -o extendedglob -o nullglob
+
+local pattern reverse
+zstyle -s :$WIDGET match pattern || pattern='*(^/)'
+zstyle -s :$WIDGET reverse reverse
+[[ $reverse = yes ]] && reverse=-r || reverse=
+
+local -a files
+eval "files=($pattern)"
+
+if [[ -z $files ]]; then
+  zle -M "no matches found: $pattern"
+else
+  local r=("${(f)$(command ls -${reverse}dsSh1 --color=always -- $files | fzf +s --ansi)}")
+  if (( $#r > 1 || $#r[1] != 0 )); then
+    LBUFFER+=${(j: :)${(q)r/(#s)[ ]#[^ ]# /}}
+  fi
+  zle redisplay
+fi

@@ -1,0 +1,14 @@
+#!/usr/bin/env zsh
+
+emulate -L zsh -o extendedglob
+
+local match mbegin mend
+
+[[ -z $BUFFER ]] && zle up-history
+if [[ $BUFFER = (#b)([[:space:]]#)(sudo[[:space:]]|)* ]]; then
+  if [[ -z $match[2] ]]; then
+    BUFFER="${match[1]}sudo ${BUFFER[$mend[2]+1,-1]}"
+  else
+    BUFFER="${match[1]}${BUFFER[$mend[2]+1,-1]}"
+  fi
+fi

@@ -1,0 +1,13 @@
+#!/usr/bin/env zsh
+
+if [[ -n $1 ]]; then
+  if [[ $1 == '-'* ]]; then
+    command sudo $@
+  else
+    autoload -U jln-unalias-exec
+    jln-unalias-exec 0 1 'command sudo' $@
+  fi
+else
+  #if no parameters were given, then assume we want a root shell
+  command sudo -s
+fi

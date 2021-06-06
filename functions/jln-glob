@@ -1,0 +1,32 @@
+#!/usr/bin/env zsh
+
+# Temporarily enables globbging options
+# $1: Comma-separated glob options. Add glob as suffix weather absent
+#
+# alias ix='noglob jln-glob nocase,numeric'
+
+local -a enable disable
+local flag
+
+for flag in ${(s:,:)1} ; do
+  # shortname support
+  case $flag in
+    *glob*) ;;
+    numeric) flag=numericglobsort;;
+    nonumeric) flag=nonumericglobsort;;
+    dots) flags=globdots;;
+    nodots) flags=noglobdots;;
+    startshort) flags=globstartshort;;
+    nostartshort) flags=noglobstartshort;;
+    *) flag+=glob;;
+  esac
+  [[ -o $flag ]] && disable+=($flag) || enable+=($flag)
+done
+
+if [[ -n $enable ]]; then setopt $enable ; fi
+if [[ -n $disable ]]; then unsetopt $disable ; fi
+
+eval ${(q)2} ${(q)${~@[3,-1]}}
+
+if [[ -n $enable ]]; then unsetopt $enable ; fi
+if [[ -n $disable ]]; then setopt $disable ; fi

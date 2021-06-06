@@ -1,0 +1,97 @@
+#!/usr/bin/env zsh
+
+# Insert a list of selected files with fzf
+#
+# If anything other than a space is to the left of the cursor,
+# it will be used as the search path.
+#
+# The default pattern matches all files, but glob qualifier can be configured as
+#
+#   # directory only
+#   zstyle :jln-fzf-files globqualifiers '/'
+#
+# Note also that the style is looked up based on the widget name, so you
+# can bind this function to different widgets to use different patterns:
+#
+#   zle -N fzf-directories jln-fzf-files
+#   zstyle :fzf-directories globqualifiers '/'
+#   bindkey '\e=' fzf-directories
+
+emulate -L zsh -o extendedglob -o globstarshort
+
+local output dir globqualifiers
+local -a files dirs query
+
+zstyle -s :$WIDGET globqualifiers globqualifiers
+globqualifiers="N$globqualifiers"
+
+if [[ ${LBUFFER[-1]} = ' ' ]] ; then
+  files=(**/*($globqualifiers))
+  if [[ -z $files ]]; then
+    zle -M 'no matches found'
+    return 1
+  fi
+  output=${(j: :)${(qf)"$(fzf +s <<<${(F)files})"}} && LBUFFER+=$output
+else
+  local found c tail=${${(Z:n:)LBUFFER}[-1]}
+  local -i ntail=$#tail
+
+  c=${tail[-1]}
+  # is directory: xxx/ or 'xxx/' or "xxx/"
+  if [[ $c = / ]] || [[ ( $c = \' || $c = \" ) && ${tail[-2]} = / ]] ; then
+    eval "dirs=($tail(NoN))"
+    if (( $#dirs != 0 )) ; then
+      found=x
+    else
+      eval "dirs=($tail*(NoN))"
+    fi
+  else
+    eval "dirs=($tail*(NoN))"
+  fi
+
+  if (( $#dirs == 1 )); then
+    files=($dirs**/*($globqualifiers))
+    if (( $#files == 0 )) ; then
+      files=($dirs($globqualifiers))
+      tail=$dirs[1]
+    elif [[ ${dirs[1][-1]} = / ]] ; then
+      tail=$dirs[1]
+    else
+      tail=$dirs[1]/
+    fi
+    found=x
+  elif (( $#dirs > 1 )); then
+    local -i n=0
+    for dir in $dirs ; do
+      files+=($dir**/*($globqualifiers))
+      if (( n == $#files )) ; then
+        files+=($dir($globqualifiers))
+      fi
+      n=$#files
+    done
+
+    [[ -z $found ]] || tail=''
+  fi
+
+  if [[ -z $files ]]; then
+    zle -M 'not matches found'
+    return 1
+  fi
+
+  if [[ -n $found ]]; then
+    query=(-q $tail)
+  else
+    local head=$tail:h
+    until [[ -d $head ]]; do
+      head=$head:h
+    done
+
+    if [[ $head != '.' ]]; then
+      query=(-q $head)
+    fi
+  fi
+
+  output=${(j: :)${(qf)"$(fzf +s $query <<<${(F)files})"}} && LBUFFER=${LBUFFER:0:-$ntail}$output
+fi
+
+zle redisplay

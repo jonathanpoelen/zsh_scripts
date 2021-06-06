@@ -1,0 +1,53 @@
+#!/usr/bin/env zsh
+
+emulate -L zsh -o extendedglob
+
+local words lwords pat match mbegin mend
+local -i start i end nword
+
+words=(${(Z:n:)BUFFER})
+nword=$#words
+
+if (( nword <= 1 )); then
+  CURSOR=$#BUFFER
+  return
+fi
+
+lwords=(${(Z:n:)LBUFFER})
+
+i=$#lwords
+if (( i == 0 )); then
+  i=1
+elif (( i == nword )); then
+  i=nword-1
+fi
+
+end=i+${NUMERIC:-1}
+(( end > nword )) && end=nword
+
+if (( end <= i )); then
+  CURSOR=$#BUFFER
+  return
+fi
+
+pat='(#b)([[:space:]]#'
+
+for ((start=1; start < i; ++start)); do
+  pat+=${(q)words[start]}'[[:space:]]#'
+done
+
+pat+=')('${(q)words[i]}')([[:space:]]#)('
+
+((++i))
+if (( i < end )); then
+  for ((; i < end; ++i)); do
+    pat+=${(q)words[i]}'[[:space:]]#'
+  done
+fi
+
+pat+=${(q)words[end]}')([[:space:]]#)'
+
+eval BUFFER='${BUFFER/'$pat'/$match[1]$match[4]$match[3]$match[2]$match[5]}'
+CURSOR=$#match[1]+$#match[2]+$#match[3]+$#match[4]+$#match[5]
+
+zle redisplay

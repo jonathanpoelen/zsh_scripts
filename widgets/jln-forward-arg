@@ -1,0 +1,36 @@
+#!/usr/bin/env zsh
+
+emulate -L zsh -o extendedglob
+
+local words lwords pat
+local -i remaining skip iword
+
+words=(${(Z:n:)BUFFER})
+lwords=(${(Z:n:)LBUFFER})
+iword=$#lwords
+skip=$((${#words[$#lwords]} - ${#lwords[-1]}))
+
+# in the middle of a shell word
+if (( skip != 0 )); then
+  remaining=${#RBUFFER[skip+1,-1]##[[:space:]]#}
+# between two shell words
+elif [[ $RBUFFER = [[:space:]]* ]]; then
+  remaining=${#RBUFFER##[[:space:]]#}
+# on the start of a shell word
+else
+  remaining=${#RBUFFER[${#words[$#lwords+1]}+1,-1]##[[:space:]]#}
+  ((++iword))
+fi
+
+if (( NUMERIC > 1 )); then
+  local -i numeric=NUMERIC+iword
+  if (( numeric > $#words )); then
+    numeric=$#words+1
+  fi
+  for ((iword+=1; iword<numeric; ++iword)); do
+    pat+=${(q)words[iword]}'[[:space:]]#'
+  done
+  eval remaining='${#RBUFFER[$#RBUFFER-remaining+1,-1]##'$pat'}'
+fi
+
+CURSOR+=$#RBUFFER-remaining

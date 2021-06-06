@@ -1,0 +1,83 @@
+#!/usr/bin/env zsh
+
+# Unalias a command then transfer it to another
+# $1: hasnoglob_alias. Disable globbing in alias
+#     0 = expand arguments. Set to 1 weather an alias contains noglob
+#     1 = no expansion
+# $1: hasnoglob_args. Disable globbing in args
+#     0 = expand arguments
+#     1 = no expansion
+#     2 = will become the value of hasnoglob_alias
+# $2: command
+# $3: alias
+# $@[4,-1]: args
+
+# alias sudo='jln-unalias-exec 0 1 sudo'
+
+typeset -A JLN_COMMAND_AS_PREFIX_COMMANDS
+JLN_COMMAND_AS_PREFIX_COMMANDS['noglob']=1
+JLN_COMMAND_AS_PREFIX_COMMANDS['nocorrect']=1
+JLN_COMMAND_AS_PREFIX_COMMANDS['jln-glob']=1
+
+jln-unalias-exec() {
+  local -i i=1 iarg=4 hasnoglob=$1 argsnoglob=$2
+  local -A visited
+  local -Ua prefixcommand
+  local cmd args result=($@[iarg,-1])
+
+  _jln-unalias-prefix
+  (( iarg+=i ))
+
+  result=($result[i])
+  i=1
+  while ; do
+    args=(${(Z:n:)aliases[$cmd]})
+
+    if (( $#args == 0 )); then
+      break
+    fi
+
+    visited[$cmd]=1
+    result[1,i]=($args)
+
+    if [[ -n $visited[$args[1]] ]]; then
+      break
+    fi
+
+    i=1
+    _jln-unalias-prefix
+  done
+
+  (( argsnoglob != 2 )) || argsnoglob=hasnoglob
+
+  if (( hasnoglob )) ; then
+    if (( argsnoglob )); then
+      args=($result[2,-1] $@[iarg,-1])
+    else
+      args=($result[2,-1] $~@[iarg,-1])
+    fi
+  elif (( argsnoglob )); then
+    args=($~result[2,-1] $@[iarg,-1])
+  else
+    args=($~result[2,-1] $~@[iarg,-1])
+  fi
+
+  if [[ -z $prefixcommand ]]; then
+    $=3 $result[1] $args
+  else
+    eval ${(q)prefixcommand}' $=3 $result[1] $args'
+  fi
+}
+
+_jln-unalias-prefix() {
+  cmd=$result[i]
+  while [[ -n $JLN_COMMAND_AS_PREFIX_COMMANDS[$cmd] ]] do
+    if [[ $cmd = 'noglob' ]]; then
+      hasnoglob=1
+    else
+      prefixcommand+=($cmd)
+    fi
+    ((++i))
+    cmd=$result[i]
+  done
+}

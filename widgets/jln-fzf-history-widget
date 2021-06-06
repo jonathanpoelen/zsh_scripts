@@ -1,0 +1,25 @@
+#!/usr/bin/env zsh
+
+# Insert history commands selected with fzf
+#
+# When several commands are selected, they are separated by ;
+# or with JLN_FZF_HISTORY_SEPARATORv variable
+
+emulate -L zsh -o extendedglob -o pipefail
+
+local selected match
+
+selected=$(command fc -l 1 |
+  FZF_DEFAULT_OPTS="--bind=ctrl-r:toggle-sort $FZF_DEFAULT_OPTS" \
+    fzf +s --tac -n2..,.. --tiebreak=index --query="${(q)LBUFFER/ #}" fzf)
+local -i ret=$?
+if (( ret == 0 )); then
+  selected=(${${(f)selected}/(#b) #([0-9]##)*/$match[1]})
+  BUFFER=$history[${selected[1]}]
+  for ((i=2; i <= $#selected; ++i)); do
+    BUFFER+=${JLN_FZF_HISTORY_SEPARATOR:-; }$history[${selected[$i]}]
+  done
+  CURSOR=$#BUFFER
+fi
+zle redisplay
+return ret
