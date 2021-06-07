@@ -2,7 +2,7 @@
 
 # Unalias a command then transfer it to another
 # $1: hasnoglob_alias. Disable globbing in alias
-#     0 = expand arguments. Set to 1 weather an alias contains noglob
+#     0 = expand arguments. Set to 1 whether an alias contains noglob
 #     1 = no expansion
 # $1: hasnoglob_args. Disable globbing in args
 #     0 = expand arguments

@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 
 # Temporarily enables globbging options
-# $1: Comma-separated glob options. Add glob as suffix weather absent
+# $1: Comma-separated glob options. Add glob as suffix when absent
 #
 # alias ix='noglob jln-glob nocase,numeric'
 
