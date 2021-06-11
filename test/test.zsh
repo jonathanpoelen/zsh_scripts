@@ -25,14 +25,19 @@ test_function() {
 }
 
 test() {
-  local result lbuf=${2/'${cursor}'*}
+  local lbuf=${2/'${cursor}'*}
   zpty -w z "jfunc=$test_function;cursor=$#lbuf;$1"
   zpty -w -n z "$lbuf${2:$#lbuf+9}@"
 
+  check_test "$@"
+}
+
+check_test() {
   ((++total))
   echo -nE $'l.\033[35m'"${functrace/*:} "$'\033[36m'"$test_function "${1:+$'\033[37m'$1 }$'\033[0m'"$2 "
 
   sleep .001
+  local result
   result=$(zpty -rt z)
   result=${result:${#result/'<OUTPUT>'*}+8}
   result=${result:0:${#result/'<\/OUTPUT>'*}}
@@ -219,6 +224,29 @@ if test_function jln-transpose-arg; then
   test 'numeric=2' 'echo abc${cursor}'           'abc echo${cursor}'
   test 'numeric=2' 'echo abc${cursor} '          'abc echo ${cursor}'
   test 'numeric=2' 'echo abc ${cursor}'          'abc echo ${cursor}'
+fi
+
+if test_function jln-save-command-line; then
+# set -xe
+  test '' 'echo abc${cursor} cd fgh'   'echo abc${cursor} cd fgh'
+  zpty -w z 'echo xyz;jfunc=redisplay;'
+  zpty -wn z '@'
+  check_test '' 'restore line' 'echo abc${cursor} cd fgh'
+  zpty -w z 'echo xyz;jfunc=jln-save-command-line;'
+  zpty -wn z '@' # disable
+  zpty -w z 'echo'
+  check_test '' 'new line' 'echo abc${cursor} cd fgh'
+  zpty -w z 'echo'
+  check_test '' 'new line' ''
+fi
+
+if test_function jln-insert-sudo; then
+  test '' 'echo abc${cursor}'         'sudo echo abc${cursor}'
+  test '' ' echo ab${cursor}c'        ' sudo echo ab${cursor}c'
+  test '' 'sudo echo a${cursor}bc'    'echo a${cursor}bc'
+  test '' ' sudo echo ${cursor}abc'   ' echo ${cursor}abc'
+  test '' ''                          'sudo jfunc=jln-insert-sudo;cursor=0;${cursor}'
+  test '' '  '                        '  sudo jfunc=jln-insert-sudo;cursor=2;${cursor}'
 fi
 
 

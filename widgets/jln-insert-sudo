@@ -4,11 +4,23 @@ emulate -L zsh -o extendedglob
 
 local match mbegin mend
 
-[[ -z $BUFFER ]] && zle up-history
+if [[ $BUFFER = (#b)([[:space:]]#)(#e) ]]; then
+  zle up-history
+  if [[ -n $match[1] ]]; then
+    LBUFFER=$match[1]$LBUFFER
+  fi
+fi
+
 if [[ $BUFFER = (#b)([[:space:]]#)(sudo[[:space:]]|)* ]]; then
   if [[ -z $match[2] ]]; then
     BUFFER="${match[1]}sudo ${BUFFER[$mend[2]+1,-1]}"
+    if (( $CURSOR > $#match[1] )); then
+      CURSOR+=5
+    fi
   else
+    if (( $CURSOR > $#match[1] )); then
+      CURSOR+=-$#match[2]
+    fi
     BUFFER="${match[1]}${BUFFER[$mend[2]+1,-1]}"
   fi
 fi

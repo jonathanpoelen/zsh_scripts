@@ -56,7 +56,9 @@ jln-save-command-line()
       # deactivated when the same
       if (( _jln_cmd_cursor == CURSOR )) && [[ $_jln_cmd_buffer = $BUFFER ]]; then
         _jln-save-command-line-clean
-        [[ $mode = 'toggle-purge' ]] && BUFFER=''
+        if [[ $mode = 'toggle-purge' ]]; then
+          BUFFER=''
+        fi
         return
       fi
   esac
