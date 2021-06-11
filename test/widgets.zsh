@@ -7,21 +7,24 @@ typeset -A only=()
 for func; only[$func]=1;
 
 integer failure=0 total=0
+first_call_delay=.01 # preload function delay
+other_call_delay=.001
 
 zmodload zsh/zpty
 zpty z 'zsh -f'
 
-zpty -w z 'PROMPT="";d='${(q)projectpath}';fpath+=($d/{widgets,functions});funcs=($d/{widgets,functions}/*);funcs=($funcs:t); autoload $funcs; for func in $funcs; zle -N $func; jtest() { local r; CURSOR=cursor; [[ -n $numeric ]] && NUMERIC=numeric; zle $jfunc && echo -E "<OUTPUT>$LBUFFER\${cursor}$RBUFFER</OUTPUT>" || echo -E "<OUTPUT>zle error</OUTPUT>";BUFFER=""; [[ -n $numeric ]] && unset numeric };zle -N jtest;bindkey @ jtest'
+zpty -w z 'PROMPT="";d='${(q)projectpath}';fpath+=($d/widgets);funcs=($d/widgets/*);funcs=($funcs:t); autoload $funcs; for func in $funcs; zle -N $func; jtest() { local r; CURSOR=cursor; [[ -n $numeric ]] && NUMERIC=numeric; zle $jfunc && echo -E "<OUTPUT>$LBUFFER\${cursor}$RBUFFER</OUTPUT>" || echo -E "<OUTPUT>zle error</OUTPUT>";BUFFER=""; [[ -n $numeric ]] && unset numeric };zle -N jtest;bindkey @ jtest'
 
 sleep .1
 zpty -rt z result
 
 test_function() {
-  test_function=$1
-
-  if [[ -n $only ]]; then
-    [[ -z $only[$test_function] ]] && return 1 || return 0
+  if [[ -n $only && -z $only[$1] ]]; then
+    return 1
   fi
+
+  test_function=$1
+  test_delay=$first_call_delay
 }
 
 test() {
@@ -36,7 +39,8 @@ check_test() {
   ((++total))
   echo -nE $'l.\033[35m'"${functrace/*:} "$'\033[36m'"$test_function "${1:+$'\033[37m'$1 }$'\033[0m'"$2 "
 
-  sleep .001
+  sleep $test_delay
+  test_delay=$other_call_delay
   local result
   result=$(zpty -rt z)
   result=${result:${#result/'<OUTPUT>'*}+8}

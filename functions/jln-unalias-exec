@@ -15,9 +15,9 @@
 # alias sudo='jln-unalias-exec 0 1 sudo'
 
 typeset -A JLN_COMMAND_AS_PREFIX_COMMANDS
-JLN_COMMAND_AS_PREFIX_COMMANDS['noglob']=1
-JLN_COMMAND_AS_PREFIX_COMMANDS['nocorrect']=1
-JLN_COMMAND_AS_PREFIX_COMMANDS['jln-glob']=1
+JLN_COMMAND_AS_PREFIX_COMMANDS[noglob]=1
+JLN_COMMAND_AS_PREFIX_COMMANDS[nocorrect]=1
+JLN_COMMAND_AS_PREFIX_COMMANDS[jln-glob]=1
 
 jln-unalias-exec() {
   local -i i=1 iarg=4 hasnoglob=$1 argsnoglob=$2
@@ -40,12 +40,12 @@ jln-unalias-exec() {
     visited[$cmd]=1
     result[1,i]=($args)
 
-    if [[ -n $visited[$args[1]] ]]; then
-      break
-    fi
-
     i=1
     _jln-unalias-prefix
+
+    if [[ -n $visited[$cmd] ]]; then
+      break
+    fi
   done
 
   (( argsnoglob != 2 )) || argsnoglob=hasnoglob
@@ -81,3 +81,5 @@ _jln-unalias-prefix() {
     cmd=$result[i]
   done
 }
+
+jln-unalias-exec $@
