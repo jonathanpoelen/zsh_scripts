@@ -2,6 +2,7 @@
 
 Each file is self-documented. Some widgets support `zstyle` option and `NUMERIC` variable.
 
+
 ## Config
 
 ```zsh
@@ -15,6 +16,7 @@ zle -N an-another-widget
 
 bindkey bindkey '^[^K' jln-kill-arg # bind a widget on ctrl+alt+k
 ```
+
 
 ## Some examples
 
@@ -39,6 +41,15 @@ alias l='ls -CF'
 smart-sudo l # run sudo ls -CF
 ```
 
+### Sudo replacement
+
+```zsh
+# in ~/.zshrc
+alias sudo='nocorrect smart-sudo'
+# or alias sudo=smart-sudo
+compdef _sudo smart-sudo
+```
+
 ## jln-transpose-arg
 
 ```zsh
@@ -56,6 +67,7 @@ $ cp a-file 'another file' one-more-file
 $ cp 'another file' a-file one-more-file
                            ^ cursor
 ```
+
 
 ## Tests
 

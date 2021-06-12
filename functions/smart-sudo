@@ -7,6 +7,9 @@
 # Equivalent to
 # smart-sudo ls -CF
 #
+# sudo replacement:
+# alias sudo=smart-sudo
+# compdef _sudo smart-sudo
 
 if [[ -n $1 ]]; then
   if [[ $1 == '-'* ]]; then
