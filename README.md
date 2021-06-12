@@ -68,6 +68,16 @@ $ cp 'another file' a-file one-more-file
                            ^ cursor
 ```
 
+## jln-save-command-line
+
+```zsh
+$ git log -p --
+# jln-save-command-line
+# we continue to write
+$ git log -p -- unfichier
+# after validation, the command line is filled with the saved one
+$ git log -p --
+```
 
 ## Tests
 
