@@ -1,5 +1,10 @@
 #!/usr/bin/env zsh
 
+# Transpose the argument under the cursor with the following.
+# When no argument is under the cursor, arguments to the
+# right and left of the cursor are used.
+# supports NUMERIC
+
 emulate -L zsh -o extendedglob
 
 local words lwords pat match mbegin mend

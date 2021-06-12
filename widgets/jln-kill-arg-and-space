@@ -1,5 +1,9 @@
 #!/usr/bin/env zsh
 
+# Remove an argument and spaces around it.
+# If the cursor is on an argument, it will be truncated.
+# supports NUMERIC
+
 emulate -L zsh -o extendedglob
 
 local words lwords

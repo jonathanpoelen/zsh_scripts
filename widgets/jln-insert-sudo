@@ -1,5 +1,7 @@
 #!/usr/bin/env zsh
 
+# Insert or remove sudo at the start of the line
+
 emulate -L zsh -o extendedglob
 
 local match mbegin mend

@@ -2,6 +2,7 @@
 set -e
 
 projectpath=$0:A:h:h
+cd $projectpath
 
 typeset -A only=()
 for func; only[$func]=1;

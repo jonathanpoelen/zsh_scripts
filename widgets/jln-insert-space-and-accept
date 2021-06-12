@@ -1,5 +1,10 @@
 #!/usr/bin/env zsh
 
+# Insert a space at the start of the line
+# (A space at the start of the order allows not to save in the history)
+#
+# When the cli is empty up-history is used beforehand
+
 emulate -L zsh
 
 [[ -z $BUFFER ]] && zle up-history

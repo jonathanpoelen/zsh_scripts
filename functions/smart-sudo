@@ -1,5 +1,13 @@
 #!/usr/bin/env zsh
 
+# Unroll aliases used with sudo
+#
+# alias l='ls -CF'
+# smart-sudo l
+# Equivalent to
+# smart-sudo ls -CF
+#
+
 if [[ -n $1 ]]; then
   if [[ $1 == '-'* ]]; then
     command sudo $@

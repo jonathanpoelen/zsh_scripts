@@ -1,5 +1,8 @@
 #!/usr/bin/env zsh
 
+# Moves to the start of the next argument
+# supports NUMERIC
+
 emulate -L zsh -o extendedglob
 
 local words lwords pat

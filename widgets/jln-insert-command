@@ -1,5 +1,8 @@
 #!/usr/bin/env zsh
 
+# Start an interactive sub-shell and inserts the result
+# of a command under the cursor position
+
 emulate -L zsh
 
 autoload -U read-from-minibuffer
