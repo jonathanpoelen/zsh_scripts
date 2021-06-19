@@ -1,0 +1,24 @@
+#!/usr/bin/env zsh
+
+for f in "$@" ; do
+  if [[ -f $f ]] ; then
+    case "$f" in
+      *.rar|*.cbr)       unrar x "$f"    ;;
+      *.zip|*.cbz|*.jar) unzip "$f"      ;;
+      *.gz)              gunzip "$f"     ;;
+      *.tar.zst)         tar --zstd -xf "$f" ;;
+      *.zst)             unzstd "$f"     ;;
+      *.tar)             tar xf "$f"     ;;
+      *.tar.bz2|*.tbz2)  tar xjf "$f"    ;;
+      *.tar.gz|*.tgz)    tar xzf "$f"    ;;
+      *.tar.xz)          tar xJf "$f"    ;;
+      *.bz2)             bunzip2 "$f"    ;;
+      *.Z)               uncompress "$f" ;;
+      *.7z)              7z x "$f"       ;;
+      *.deb) /usr/bin/ar vx "$f" ;;
+      *) echo "$0: '$f' cannot be extracted" >&2 ; return 2;;
+    esac
+  else
+    echo "$0: '$f' is not a valid file" >&2 ; return 1
+  fi
+done
