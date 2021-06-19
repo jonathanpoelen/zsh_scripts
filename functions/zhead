@@ -1,0 +1,17 @@
+#!/usr/bin/env zsh
+
+# output the first part of files
+
+emulate -L zsh
+
+local l=( "${(f@)$(<${2:-/dev/stdin})}" )
+local -i n=$#l
+
+if (( $n != 0 )); then
+  local -i i=$1
+  if (( $i < 0 )); then
+    echo -E ${(F)${l[$(( $i < -$n ? 1 : $i )),-1]}}
+  else
+    echo -E ${(F)${l[1,$i]}}
+  fi
+fi

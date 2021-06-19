@@ -33,7 +33,15 @@ test() {
 
 check() {
   local expected=${(j: :)${(qqq)@}}
+  check_impl
+}
 
+check_s() {
+  local expected=${(j: :)${@}}
+  check_impl
+}
+
+check_impl() {
   if (( haserror )) || [[ $expected != $output ]]; then
     echo -E $'\033[31mERROR\033[0m'
     local -i min=$#output i
@@ -65,8 +73,7 @@ check_error()
     echo -E $'\033[32mOK\033[0m'
   else
     haserror=1
-    output=\"$output\"
-    check $1
+    check_s $1
   fi
 }
 
@@ -149,6 +156,20 @@ if test_function swap ; then
   test $d/a $d/c; check_error "xxx: '$d/c': No such file or directory"
   test $d/b $d/a/; check_cmd "[[ -f $dq/a ]]" "[[ -d $dq/b ]]"
   test $d/b/ $d/a; check_cmd "[[ -d $dq/a ]]" "[[ -f $dq/b ]]"
+fi
+
+if test_function zhead ; then
+  s='Lorem Ipsum is
+simply dummy text
+of the printing and
+typesetting industry'
+  test 0 <<<$s; check_s
+  test 1 <<<$s; check_s 'Lorem Ipsum is'
+  test 2 <<<$s; check_s $'Lorem Ipsum is\nsimply dummy text'
+  test 5 <<<$s; check_s $s
+  test -1 <<<$s; check_s 'typesetting industry'
+  test -2 <<<$s; check_s $'of the printing and\ntypesetting industry'
+  test -5 <<<$s; check_s $s
 fi
 
 
