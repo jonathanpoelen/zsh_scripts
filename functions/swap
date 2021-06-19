@@ -1,0 +1,25 @@
+#!/usr/bin/env zsh
+
+# swap two files or directories
+
+emulate -L zsh -o extendedglob
+
+if [[ $# -ne 2 ]]; then
+  echo "$0 only expects 2 arguments" >&2
+  return 3
+elif [[ ! -a $2 ]]; then
+  echo "$0: '$2': No such file or directory" >&2
+  return 2
+elif [[ ! -a $1 ]]; then
+  echo "$0: '$1': No such file or directory" >&2
+  return 1
+fi
+
+1=${1%%\/#}
+2=${2%%\/#}
+
+local tmp=$1:h/$1:t-$$-${(%):-%D{%s%N}}.tmp
+
+mv $1 $tmp &&
+mv $2 $1 &&
+mv $tmp $2

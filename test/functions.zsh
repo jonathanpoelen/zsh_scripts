@@ -26,6 +26,7 @@ test() {
   ((++total))
   echo -nE $'l.\033[35m'"${functrace/*:} "$'\033[36m'"$test_function "$'\033[0m'"$@ "
   haserror=0
+  output=
 
   output=$(xxx $@ 2>&1) || haserror=1
 }
@@ -52,6 +53,41 @@ check() {
     fi
     echo
 
+    ((++failure))
+  else
+    echo -E $'\033[32mOK\033[0m'
+  fi
+}
+
+check_error()
+{
+  if (( haserror )) && [[ $1 = $output ]] ; then
+    echo -E $'\033[32mOK\033[0m'
+  else
+    haserror=1
+    output=\"$output\"
+    check $1
+  fi
+}
+
+check_cmd()
+{
+  if (( haserror )); then
+    echo -E $'\033[31mERROR\033[0m'
+    echo error code $'\033[4;33m'$haserror$'\033[0m'
+    echo output: $'\033[4;33m'$output$'\033[0m'
+    return
+  fi
+
+  local msg=''
+  integer i=1
+  for cmd; do
+    haserror=0
+    eval $cmd || msg+=$'\nwith $'$i$': \033[4;33m'$cmd$'\033[0m'
+    ((++i))
+  done
+  if [[ -n $msg ]] ; then
+    echo -E $'\033[31mERROR\033[0m'$msg
     ((++failure))
   else
     echo -E $'\033[32mOK\033[0m'
@@ -100,6 +136,19 @@ if test_function jln-unalias-exec ; then
 
   test 0 0 keep r0 n; check r0 xyz abc n
   test 0 0 keep r1 n; check r1 abc xyz n
+fi
+
+if test_function swap ; then
+  d=${TMPDIR:-/tmp}/jln_zsh_script
+  dq=${(q)d}
+
+  [[ -d $d ]] && rm -r $d
+  mkdir -p $d/a
+  :>$d/b
+
+  test $d/a $d/c; check_error "xxx: '$d/c': No such file or directory"
+  test $d/b $d/a/; check_cmd "[[ -f $dq/a ]]" "[[ -d $dq/b ]]"
+  test $d/b/ $d/a; check_cmd "[[ -d $dq/a ]]" "[[ -f $dq/b ]]"
 fi
 
 
