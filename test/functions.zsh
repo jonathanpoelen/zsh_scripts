@@ -158,11 +158,12 @@ if test_function swap ; then
   test $d/b/ $d/a; check_cmd "[[ -d $dq/a ]]" "[[ -f $dq/b ]]"
 fi
 
-if test_function zhead ; then
-  s='Lorem Ipsum is
+s='Lorem Ipsum is
 simply dummy text
 of the printing and
 typesetting industry'
+
+if test_function zhead ; then
   test 0 <<<$s; check_s
   test 1 <<<$s; check_s 'Lorem Ipsum is'
   test 2 <<<$s; check_s $'Lorem Ipsum is\nsimply dummy text'
@@ -170,6 +171,26 @@ typesetting industry'
   test -1 <<<$s; check_s 'typesetting industry'
   test -2 <<<$s; check_s $'of the printing and\ntypesetting industry'
   test -5 <<<$s; check_s $s
+fi
+
+if test_function zg ; then
+  GREP_COLOR='1;31'
+  color=$'\x1b[1;31m'
+  reset=$'\x1b[0m'
+  test in <<<$s; check_s $'of the printing and\ntypesetting industry'
+  test -v in <<<$s; check_s $'Lorem Ipsum is\nsimply dummy text'
+  test -a in <<<$s; check_s "of the pr${color}in${reset}t${color}in${reset}g and"$'\n'"typesett${color}in${reset}g ${color}in${reset}dustry"
+  test -av in <<<$s; check_s $'Lorem Ipsum is\nsimply dummy text'
+
+  test -C in <<<$s; check_s "Lorem Ipsum is
+simply dummy text
+of the pr${color}in${reset}t${color}in${reset}g and
+typesett${color}in${reset}g ${color}in${reset}dustry"
+
+  test -VC in <<<$s; check_s "${color}Lorem Ipsum is${reset}
+${color}simply dummy text${reset}
+${color}of the pr${reset}in${color}t${reset}in${color}g and${reset}
+${color}typesett${reset}in${color}g ${reset}in${color}dustry${reset}"
 fi
 
 

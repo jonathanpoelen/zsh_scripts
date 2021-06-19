@@ -1,0 +1,142 @@
+#!/usr/bin/env zsh
+_zg_return() {
+  [[ -z $1 ]] && return 1
+  echo -E $1
+}
+
+zg() {
+  local e='_zg_return ' m='(M)' j='(F)' d=f p=eval C= n=
+  typeset -i M=1 t=0 X=0 v=0 a=0 x=1
+
+  setopt localoptions extendedglob
+
+  while getopts p:e:d:j:C:MvVacznxXhrR opt ; do
+    case $opt in
+      (e) e=$OPTARG' ' ;;
+      (r) e='reply=(' ; j= ;;
+      (R) e='REPLY=' ;;
+      (d) d=$OPTARG ;;
+      (j) j=${OPTARG:+\($OPTARG\)} ;;
+      (C) C=${OPTARG//(#m)[[\/\'\"\\]/\\$MATCH} ;
+          if [[ -z $C ]]; then
+            echo $0: Missing color pattern >&2
+            return 2
+          fi
+          ((M-=1)) ;;
+      (M) ((M+=1)) ;;
+      (v) m= ; v=2 ;;
+      (V) v=1 ;;
+      (a) a=1 ;;
+      (c) t=1 ;;
+      (z) t=2 ;;
+      (X) X=1 ;;
+      (x) x=0 ;;
+      (n) n=\" ;;
+      (p) p=$OPTARG ;;
+      (h|\?) echo 'zsh grep
+zg [-e cmd | -r | -R] [-d zshopt] [-j zshopt] [-C pattern_for_color ] [-p cmd] [-MXVvavsnxh] [--] pattern [{ files | expression | command ... }]
+ -e: execute command
+ -r saved array in the parameter `reply`
+ -R saved string in the parameter `REPLY`
+ -d: zsh flag like `s:,:` in ${(s:,:)line}
+ -j: join lines with specified zsh option like `j:,:` in ${(j:,:)array}
+ -C: pattern for color ; disable pattern filter
+ -M: enable pattern filter event with -C
+ -a: deduct -C from the pattern
+ -v: invert match
+ -V: invert color match
+ -c: files as a command
+ -z: files as a expression
+ -n: keep empty lines
+ -X: colorizes the first occurrence only
+ -x: select only those matches that exactly match the whole line
+ -p: set expression evaluator, default is `eval`'
+        [[ $opt = h ]] ; return $?
+        ;;
+      *) break
+    esac
+  done
+
+  if (( M <= 0 )); then
+    m=
+  fi
+
+  if [[ -n $n ]]; then
+    m="(@$m[2])"
+    d+=@
+  fi
+
+  local pat=${@[$OPTIND]//(#m)[\/\'\"]/\\$MATCH}
+
+  if [[ -z $pat ]] && [[ -z $C ]]; then
+    echo $0: Missing or empty pattern >&2
+    return 2
+  fi
+
+  if [[ -n $C ]]; then
+    (( v == 1 )) && m='${'$m
+  elif (( a == 1 )); then
+    C=$pat
+    if (( x == 0 )); then
+      case $C[1]$C[$#C] in
+        ('**') C=${C[2,-2]} ;;
+        (?'*') C=${C[1,-2]} ; X=2 ;;
+        ('*'?) C=${C[2,$]} ; X=3 ;;
+        (??) X=1 ;;
+      esac
+    fi
+  fi
+
+  local eb=$e[$#e]
+  local jn=$j$n
+  [[ -n $jn ]] && e+='${'$jn
+  e+='${'$m'${'${d:+\($d\)}
+
+  if (( M > 0 )); then
+    if (( x == 1 )); then
+      m='}:#'
+      [[ ${pat[1]} != '*' ]] && m+='*'
+      m+=$pat
+      [[ ${pat[${#pat}]} != '*' ]] && m+='*'
+      m+='}'
+    else
+      m='}:#'$pat'}'
+    fi
+  else
+    m='}}'
+    ((OPTIND-=1))
+  fi
+
+  if [[ -n $C ]]; then
+    if (( X == 3 )); then
+      C+='(#e)'
+    elif (( X == 2 )); then
+      C='(#s)'$C
+    elif (( X == 0 )); then
+      m+=/
+    fi
+
+    if (( v == 0 )); then
+      m+="/(#m)$C/$'\x1b'[${GREP_COLOR}m\${MATCH}$'\x1b'[0m"
+    elif (( v == 1 )); then
+      m+="/(#m)$C/$'\x1b'[0m\${MATCH}$'\x1b'[${GREP_COLOR}m}/(#m)*/$'\x1b'[${GREP_COLOR}m\${MATCH}$'\x1b'[0m"
+    fi
+  fi
+
+  [[ -n $jn ]] && n+='}'
+  [[ $eb = '(' ]] && m+=$n')' || m+=$n
+
+  shift $OPTIND
+
+  if (( $# == 0 )); then
+    $=p $e'"$(</dev/stdin)"'$m
+  elif (( t == 0 )); then
+    $=p $e'"$(<'${(j:<:)${(q)@}}')"'$m
+  elif (( t == 1 )); then
+    $=p $e'"$('${(q)@}')"'$m
+  else
+    $=p $e$@$m
+  fi
+}
+
+zg "$@"
