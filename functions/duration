@@ -1,0 +1,14 @@
+#!/usr/bin/env zsh
+
+# Like time, but only displays elapsed time in seconds.
+#
+# Add the following line for auto-completion:
+# _comps[duration]=_precommand
+
+_duration_run() {
+  local TIMEFMT='%*E'
+  time $@
+}
+
+alias duration='jln-unalias-exec 0 1 _duration_run'
+duration $@
