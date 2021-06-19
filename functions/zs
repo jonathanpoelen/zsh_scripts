@@ -1,0 +1,80 @@
+#!/usr/bin/env zsh
+
+typeset -gA _zs_assoc_s=(ns 'S' gns 'S' gsn 'S' sgn 'S' sng 'S' ngs 'S' nsg 'S')
+typeset -gA _zs_assoc_r=(gs / sg / gns / gsn / sgn / sng / ngs / nsg /)
+
+zs()
+{
+  local prefix='' suffix='' prefixcmd=@f cmd= e= out= j=@ tmp= pf='(F)'
+  local -i i=1 toto=$#@ iout=1
+
+  setopt localoptions extendedglob
+
+  for ((; $i<=$toto; i+=2)) {
+    case $@[$i] in
+      (s|gs|sg|ns|gns|gsn|sgn|sng|ngs|nsg)
+        tmp=$_zs_assoc_s[$@[$i]]$j
+        prefix='${'${tmp:+\($tmp\)}$prefix
+        suffix+=$_zs_assoc_r[$@[$i]]/${@[$(($i+1))]//(#m)[\/\'\"\\]/\\$MATCH}/$@[$(($i+2))]'}'
+        i+=1 ;;
+      (i) [[ -z $tmp ]] && prefix='(I:'$@[$(($i+1))]':)'$prefix || prefix='${('$tmp'I:'$@[$(($i+1))]':'${prefix[$(($#tmp+4)),-1]} ;;
+      (d) prefix='${'${j:+($j)}$prefix; suffix+=':#'${@[$(($i+1))]//(#m)[\/\'\"]/\\$MATCH}'}' ;;
+      (g) prefix='${(M'$j')'$prefix; suffix+=':#'${@[$(($i+1))]//(#m)[\/\'\"]/\\$MATCH}'}' ;;
+      (-o) out=${(q)@[$(($i+1))]} ;;
+      (-u) out=${(q)@[$(($i+1))]} ; cmd+='<'$out';' ;;
+      (f) cmd+='<'${(q)@[$(($i+1))]}';' ;;
+      ('--') for ((i+=1; $i<=$toto; ++i)) cmd+='<'${(q)@[$i]}';' ;;
+      (z) cmd+=${@[$(($i+1))]}';' ;;
+      (p) prefix='${('${@[$(($i+1))]}')'$prefix ; suffix+='}' ;;
+      (t) prefixcmd=$@[$(($i+1))] ;;
+      (n) prefixcmd=$@[$(($i+1))]$prefixcmd ;;
+      (P) e=$@[$(($i+1))] ;;
+      (e) j= ; i+=-1 ;;
+      (r) tmp=$@[$(($i+1))]; case $tmp in
+        (',') prefix='${'$prefix; suffix+='[1,'$(($LINES/2))']}' ;;
+        ('_') prefix='${'$prefix; suffix+='[-'$(($LINES/2))',-1]}' ;;
+        (','*) prefix='${'$prefix; suffix+='[1'$tmp']}' ;;
+        (*',') prefix='${'$prefix; suffix+='['$tmp'-1]}' ;;
+        (*) prefix+='${'$prefix; suffix+='['$tmp']}' ;;
+      esac ;;
+      (-I) iout=0 ; i+=-1 ;;
+      (-h) echo "$0: [{s|gs|ns|gns|d|g} pattern replacement [i nth]] [P progname] [z expr] [e|t|n|-I] [p paramexpansion] [{-o|-u} file] [[f] file] ... | -- file ...
+- s: replace
+- gs: global replace
+- ns: replace non-greedy
+- gns: global replace non-greedy
+- i: exprth match, only with ns and gns
+- d: delete
+- g: keep
+- P: evaluator
+- z: zsh expression
+- p: parameter expansion flags
+- r: array selection 'r -1', 'r ,5', 'r -6,'
+- f: read file
+- -u: read and write file (only last file)
+- e: remove empty line
+- t: parameter expansion flags for file
+- n: extra parameter expansion flags for file
+- -o: output file
+- -I override file"; return 1 ;;
+      (*) cmd+='<'${(q)@[$i]}';' ; i+=-1 ;;
+    esac
+  }
+
+  if [[ -z $e ]]; then
+    if [[ -z $out ]]; then
+      e='eval echo -E'
+    else
+      e=eval
+    fi
+  fi
+
+  if [[ -n $out ]] && (( $iout == 1 )); then
+    echo "$0 overwrite $out? "
+    read -q || return 1
+  fi
+
+  $=e ${out:+'(){>'$out'<<<$1} '}"\${${prefixcmd:+$pf}$prefix\${${prefixcmd:+($prefixcmd)}\"\$(${cmd:-</dev/stdin})\"}$suffix}"
+}
+
+zs $@

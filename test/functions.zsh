@@ -193,6 +193,15 @@ ${color}of the pr${reset}in${color}t${reset}in${color}g and${reset}
 ${color}typesett${reset}in${color}g ${reset}in${color}dustry${reset}"
 fi
 
+if test_function zs ; then
+  test r 2,3 <<<$s; check_s $'simply dummy text\nof the printing and'
+  test r 2,-2 <<<$s; check_s $'simply dummy text\nof the printing and'
+  test r 3, <<<$s; check_s $'of the printing and\ntypesetting industry'
+  test r ,2 <<<$s; check_s $'Lorem Ipsum is\nsimply dummy text'
+  test r ,2 s m X <<<$s; check_s $'LoreX Ipsum is\nsiXply dummy text'
+  test r ,2 gs m X <<<$s; check_s $'LoreX IpsuX is\nsiXply duXXy text'
+fi
+
 
 if (( failure )); then
   echo "failure: $failure on $total" >&2
