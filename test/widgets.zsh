@@ -217,6 +217,7 @@ if test_function jln-transpose-arg; then
   test '' 'echo abc${cursor}'          'abc echo${cursor}'
   test '' 'echo abc${cursor} '         'abc echo ${cursor}'
   test '' 'echo abc ${cursor}'         'abc echo ${cursor}'
+  test '' 'echo ab/c${cursor} d'       'echo d ab/c${cursor}'
 
   test 'numeric=2' 'echo abc${cursor} cd fgh'    'echo cd fgh abc${cursor}'
   test 'numeric=2' 'echo a${cursor}bc cd fgh'    'echo cd fgh abc${cursor}'

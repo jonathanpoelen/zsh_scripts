@@ -52,7 +52,7 @@ fi
 
 pat+=${(q)words[end]}')([[:space:]]#)'
 
-eval BUFFER='${BUFFER/'$pat'/$match[1]$match[4]$match[3]$match[2]$match[5]}'
+eval BUFFER='${BUFFER/'${pat//\//\\/}'/$match[1]$match[4]$match[3]$match[2]$match[5]}'
 CURSOR=$#match[1]+$#match[2]+$#match[3]+$#match[4]+$#match[5]
 
 zle redisplay
