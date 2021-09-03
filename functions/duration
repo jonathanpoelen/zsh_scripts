@@ -5,10 +5,11 @@
 # Add the following line for auto-completion:
 # _comps[duration]=_precommand
 
+autoload -U jln-unalias-exec
+
 _duration_run() {
   local TIMEFMT='%*E'
   time $@
 }
 
-alias duration='jln-unalias-exec 0 1 _duration_run'
-duration $@
+jln-unalias-exec 0 1 _duration_run $@
