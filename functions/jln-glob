@@ -1,32 +1,73 @@
 #!/usr/bin/env zsh
 
-# Temporarily enables globbging options
-# $1: Comma-separated glob options. Add glob as suffix when absent
+# jln-glob()
+# Enables globbing options.
+# $@: glob options. Add glob as suffix when absent
 #
-# alias ix='noglob jln-glob nocase,numeric'
+# jln-glob-pop()
+# Revert globbing options
+# $@: optional command
+#
+# jln-glob-push()
+# Push globbing states for recursive call
+#
+# alias ix='jln-glob nocase numeric ; jln-glob-pop'
 
-local -a enable disable
-local flag
+typeset -ga _jln_glob_enable
+typeset -ga _jln_glob_disable
+typeset -ga _jln_glob_stack
 
-for flag in ${(s:,:)1} ; do
-  # shortname support
-  case $flag in
-    *glob*) ;;
-    numeric) flag=numericglobsort;;
-    nonumeric) flag=nonumericglobsort;;
-    dots) flags=globdots;;
-    nodots) flags=noglobdots;;
-    startshort) flags=globstartshort;;
-    nostartshort) flags=noglobstartshort;;
-    *) flag+=glob;;
-  esac
-  [[ -o $flag ]] && disable+=($flag) || enable+=($flag)
-done
+jln-glob()
+{
+  local flag
 
-if [[ -n $enable ]]; then setopt $enable ; fi
-if [[ -n $disable ]]; then unsetopt $disable ; fi
+  _jln_glob_enable=()
+  _jln_glob_disable=()
 
-eval ${(q)2} ${(q)${~@[3,-1]}}
+  for flag ; do
+    # shortname support
+    case $flag in
+      *glob*) ;;
+      numeric) flag=numericglobsort;;
+      nonumeric) flag=nonumericglobsort;;
+      dots) flags=globdots;;
+      nodots) flags=noglobdots;;
+      startshort) flags=globstartshort;;
+      nostartshort) flags=noglobstartshort;;
+     *) flag+=glob;;
+    esac
+    [[ -o $flag ]] && _jln_glob_disable+=($flag) || _jln_glob_enable+=($flag)
+  done
 
-if [[ -n $enable ]]; then unsetopt $enable ; fi
-if [[ -n $disable ]]; then setopt $disable ; fi
+  if [[ -n $_jln_glob_enable ]]; then setopt $_jln_glob_enable ; fi
+  if [[ -n $_jln_glob_disable ]]; then unsetopt $_jln_glob_disable ; fi
+}
+
+jln-glob-push()
+{
+  _jln_glob_stack+=("$_jln_glob_enable" "$_jln_glob_disable")
+}
+
+jln-glob-pop()
+{
+  if [[ -n $_jln_glob_enable ]]; then
+    unsetopt $_jln_glob_enable
+    _jln_glob_enable=()
+  fi
+
+  if [[ -n $_jln_glob_disable ]]; then
+    setopt $_jln_glob_disable
+    _jln_glob_disable=()
+  fi
+
+  if [[ -n $_jln_glob_stack ]]; then
+    local -i n=$#_jln_glob_stack
+    _jln_glob_disable=($=_jln_glob_stack[n])
+    _jln_glob_enable=($=_jln_glob_stack[n-1])
+    _jln_glob_stack[n-1,n]=()
+  fi
+
+  $@
+}
+
+jln-glob $@

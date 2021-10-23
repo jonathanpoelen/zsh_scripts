@@ -103,8 +103,10 @@ check_cmd()
 
 
 if test_function jln-glob ; then
-  test nocase,numeric keep 'F*'; check functions
-  test numeric,nocase keep 'F*'; check functions
+  eval "pre_$(functions xxx)"
+  xxx() { pre_xxx $=1 ; shift ; jln-glob-pop $~@ }
+  test 'nocase numeric' keep 'F*'; check functions
+  test 'numeric nocase' keep 'F*'; check functions
   test nocase keep 'F*'; check functions
   test null keep 'F*'; check
 fi

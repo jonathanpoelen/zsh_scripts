@@ -23,7 +23,7 @@ bindkey bindkey '^[^K' jln-kill-arg # bind a widget on ctrl+alt+k
 ## jln-glob
 
 ```zsh
-alias ng='noglob jln-glob numeric' # sort numerically
+alias ng='jln-glob numeric ; jln-glob-pop' # sort numerically
 
 # 3 files listed in lexicographic order
 echo *
