@@ -67,7 +67,11 @@ jln-glob-pop()
     _jln_glob_stack[n-1,n]=()
   fi
 
-  $@
+  if (( $# != 0 )); then
+    eval "_jln-glob-tmp-func() { ${(q)1} \$@ }"
+    shift
+    _jln-glob-tmp-func $@
+  fi
 }
 
 jln-glob $@
