@@ -14,12 +14,15 @@
 
 # alias sudo='jln-unalias-exec 0 1 sudo'
 
-typeset -A JLN_COMMAND_AS_PREFIX_COMMANDS
-JLN_COMMAND_AS_PREFIX_COMMANDS[noglob]=1
-JLN_COMMAND_AS_PREFIX_COMMANDS[nocorrect]=1
-JLN_COMMAND_AS_PREFIX_COMMANDS[jln-glob]=1
+typeset -gA JLN_COMMAND_AS_PREFIX_COMMANDS=(
+  noglob 1
+  nocorrect 1
+  jln-glob 1
+)
 
 jln-unalias-exec() {
+  emulate -L zsh
+
   local -i i=1 iarg=4 hasnoglob=$1 argsnoglob=$2
   local -A visited
   local -Ua prefixcommand
