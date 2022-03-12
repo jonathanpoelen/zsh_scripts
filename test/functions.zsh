@@ -102,6 +102,12 @@ check_cmd()
 }
 
 
+if test_function each ; then
+  test echo a b; check_s $'a\nb'
+  test echo a -- b c; check_s $'a b\na c'
+  test echo -- a -- b; check_s $'a\n--\nb'
+fi
+
 if test_function jln-glob ; then
   eval "pre_$(functions xxx)"
   xxx() { pre_xxx $=1 ; shift ; jln-glob-pop $~@ }

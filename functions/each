@@ -1,0 +1,35 @@
+#!/usr/bin/env zsh
+
+# Apply a function on each of the arguments
+#
+# $ each cmd arg1 arg2
+# equivalent to
+# $ cmd arg1
+# $ cmd arg2
+#
+# -- is used to mark end of options
+#
+# $ each cnd opt -- arg1 arg2
+# equivalent to
+# $ cmd opt arg1
+# $ cmd opt arg2
+#
+# For further usage, please consider zargs command
+#
+# Add the following line for auto-completion:
+# _comps[each]=_precommand
+
+local -i iargs=${@[(ie)--]} ecmd=1
+local args=
+if (( $iargs > $# )); then
+  iargs=1
+else
+  ecmd=iargs-1
+  if (( $iargs > 2 )); then
+    args="${(q)${@[2,$ecmd]}}"
+  fi
+fi
+
+for f in $@[$iargs+1,-1]; do
+  eval "$1 $args ${(q)f}"
+done
