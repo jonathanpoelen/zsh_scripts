@@ -10,6 +10,9 @@
 #   # directory only
 #   zstyle :jln-fzf-files globqualifiers '/'
 #
+#   # no recursive search
+#   zstyle :jln-fzf-files disablerecursive 1
+#
 # Note also that the style is looked up based on the widget name, so you
 # can bind this function to different widgets to use different patterns:
 #
@@ -17,21 +20,43 @@
 #   zstyle :fzf-directories globqualifiers '/'
 #   bindkey '\e=' fzf-directories
 
-emulate -L zsh -o extendedglob -o globstarshort
+emulate -L zsh -o extendedglob
 
-local output dir globqualifiers
+local output dir globqualifiers disablerecursive
 local -a files dirs query
 
 zstyle -s :$WIDGET globqualifiers globqualifiers
+zstyle -s :$WIDGET disablerecursive disablerecursive
 globqualifiers="N$globqualifiers"
 
 if [[ ${LBUFFER[-1]} = ' ' ]] ; then
-  files=(**/*($globqualifiers))
-  if [[ -z $files ]]; then
+  if [[ $disablerecursive = 1 ]]; then
+    files=(*($globqualifiers))
+  else
+    files=(**/*($globqualifiers))
+  fi
+
+  if (( $#files == 0 )); then
     zle -M 'no matches found'
     return 1
   fi
   output=${(j: :)${(qf)"$(fzf +s <<<${(F)files})"}} && LBUFFER+=$output
+
+elif [[ $disablerecursive = 0 ]]; then
+  local tail=${${(Z:n:)LBUFFER}[-1]}
+  eval "files=($tail(NoN))"
+
+  if (( $#files == 0 )); then
+    zle -M 'no matches found'
+    return 1
+  fi
+
+  if [[ $c = / ]] || [[ ( $c = \' || $c = \" ) && ${tail[-2]} = / ]] ; then
+    query=(-q $tail)
+  fi
+
+  output=${(j: :)${(qf)"$(fzf +s $query <<<${(F)files})"}} && LBUFFER=${LBUFFER:0:-$#tail}$output
+
 else
   local found c tail=${${(Z:n:)LBUFFER}[-1]}
   local -i ntail=$#tail
@@ -73,7 +98,7 @@ else
     [[ -z $found ]] || tail=''
   fi
 
-  if [[ -z $files ]]; then
+  if (( $#files == 0 )); then
     zle -M 'not matches found'
     return 1
   fi
