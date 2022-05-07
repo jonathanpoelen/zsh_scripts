@@ -9,7 +9,7 @@
 #
 # -- is used to mark end of options
 #
-# $ each cnd opt -- arg1 arg2
+# $ each cmd opt -- arg1 arg2
 # equivalent to
 # $ cmd opt arg1
 # $ cmd opt arg2
