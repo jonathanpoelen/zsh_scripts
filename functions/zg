@@ -116,10 +116,11 @@ zg [-e cmd | -r | -R] [-d zshopt] [-j zshopt] [-C pattern_for_color ] [-p cmd] [
       m+=/
     fi
 
+    local color=${GREP_COLOR:-31}
     if (( v == 0 )); then
-      m+="/(#m)$C/$'\x1b'[${GREP_COLOR}m\${MATCH}$'\x1b'[0m"
+      m+="/(#m)$C/$'\x1b'[${color}m\${MATCH}$'\x1b'[0m"
     elif (( v == 1 )); then
-      m+="/(#m)$C/$'\x1b'[0m\${MATCH}$'\x1b'[${GREP_COLOR}m}/(#m)*/$'\x1b'[${GREP_COLOR}m\${MATCH}$'\x1b'[0m"
+      m+="/(#m)$C/$'\x1b'[0m\${MATCH}$'\x1b'[${color}m}/(#m)*/$'\x1b'[${color}m\${MATCH}$'\x1b'[0m"
     fi
   fi
 
