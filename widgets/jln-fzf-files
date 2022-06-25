@@ -8,115 +8,164 @@
 # The default pattern matches all files, but glob qualifier can be configured as
 #
 #   # directory only
-#   zstyle :jln-fzf-files globqualifiers '/'
+#   zstyle :jln-fzf-files glob-qualifiers '/'
 #
 #   # no recursive search
-#   zstyle :jln-fzf-files disablerecursive 1
+#   zstyle :jln-fzf-files disable-recursive 1
+#
+# The default selector (jln-fzf-color-selector) uses fzf and ls for the color.
+# The jln-fzf-selector does not use ls.
+# The jln-fzf-size-selector use ls to display file sizes.
+#
+#   # reverse order for jln-fzf-size-selector and jln-fzf-color-selector
+#   zstyle :jln-fzf-files ls-params -r
+#
+#   # case-insensitive match for fzf
+#   zstyle :jln-fzf-files fzf-params -i
+#
+# If needed, you can specify your own function.
+# $prefix and $files will be predefined variables.
+# The final string must be put in the variable REPLY.
+#
+#   zstyle :jln-fzf-files selector my-selector
 #
 # Note also that the style is looked up based on the widget name, so you
 # can bind this function to different widgets to use different patterns:
 #
 #   zle -N fzf-directories jln-fzf-files
-#   zstyle :fzf-directories globqualifiers '/'
+#   zstyle :fzf-directories glob-qualifiers '/'
 #   bindkey '\e=' fzf-directories
 
-emulate -L zsh -o extendedglob
-
-local output dir globqualifiers disablerecursive
-local -a files dirs query
-
-zstyle -s :$WIDGET globqualifiers globqualifiers
-zstyle -s :$WIDGET disablerecursive disablerecursive
-globqualifiers="N$globqualifiers"
-
-if [[ ${LBUFFER[-1]} = ' ' ]] ; then
-  if [[ $disablerecursive = 1 ]]; then
-    files=(*($globqualifiers))
+jln-fzf-selector() {
+  if [[ -n $prefix ]]; then
+    REPLY=${(j: :)${(qf)"$(fzf -m +s $=fzf_params -q $prefix <<<${(F)files})"}}
   else
-    files=(**/*($globqualifiers))
+    REPLY=${(j: :)${(qf)"$(fzf -m +s $=fzf_params <<<${(F)files})"}}
   fi
+}
 
-  if (( $#files == 0 )); then
-    zle -M 'no matches found'
-    return 1
+jln-fzf-color-selector() {
+  if [[ -n $prefix ]]; then
+    REPLY=${(j: :)${(qf)"$(command ls $=ls_params --color -1d -- $files | fzf -m --ansi +s $=fzf_params -q $prefix)"}}
+  else
+    REPLY=${(j: :)${(qf)"$(command ls $=ls_params --color -1d -- $files | fzf -m --ansi +s $=fzf_params)"}}
   fi
-  output=${(j: :)${(qf)"$(fzf +s <<<${(F)files})"}} && LBUFFER+=$output
+}
 
-elif [[ $disablerecursive = 0 ]]; then
-  local tail=${${(Z:n:)LBUFFER}[-1]}
-  eval "files=($tail(NoN))"
+jln-fzf-size-selector() {
+  if [[ -n $prefix ]]; then
+    REPLY=("${(f)$(command ls -Ssh $=ls_params -d1 --color -- $files | fzf -m --ansi +s $=fzf_params -q $prefix)}")
+  else
+    REPLY=("${(f)$(command ls -Ssh $=ls_params -d1 --color -- $files | fzf -m --ansi +s $=fzf_params)}")
+  fi &&
+  REPLY=${(j: :)${(q)REPLY/(#s)[ ]#[^ ]# /}}
+}
 
-  if (( $#files == 0 )); then
-    zle -M 'no matches found'
-    return 1
-  fi
+jln-fzf-files() {
+  emulate -L zsh -o extendedglob
 
-  if [[ $c = / ]] || [[ ( $c = \' || $c = \" ) && ${tail[-2]} = / ]] ; then
-    query=(-q $tail)
-  fi
+  local REPLY dir glob_qualifiers disable_recursive selector ls_params fzf_params
+  local -a files dirs prefix
 
-  output=${(j: :)${(qf)"$(fzf +s $query <<<${(F)files})"}} && LBUFFER=${LBUFFER:0:-$#tail}$output
+  zstyle -s :$WIDGET glob-qualifiers glob_qualifiers
+  zstyle -s :$WIDGET disable-recursive disable_recursive
+  zstyle -s :$WIDGET selector selector
+  zstyle -s :$WIDGET ls-params ls_params
+  zstyle -s :$WIDGET fzf-params fzf_params
+  glob_qualifiers="N$glob_qualifiers"
+  selector=${selector:-jln-fzf-color-selector}
 
-else
-  local found c tail=${${(Z:n:)LBUFFER}[-1]}
-  local -i ntail=$#tail
+  if [[ ${LBUFFER[-1]} = ' ' ]] ; then
+    if [[ $disable_recursive = 1 ]]; then
+      files=(*($glob_qualifiers))
+    else
+      files=(**/*($glob_qualifiers))
+    fi
 
-  c=${tail[-1]}
-  # is directory: xxx/ or 'xxx/' or "xxx/"
-  if [[ $c = / ]] || [[ ( $c = \' || $c = \" ) && ${tail[-2]} = / ]] ; then
-    eval "dirs=($tail(NoN))"
-    if (( $#dirs != 0 )) ; then
-      found=x
+    if (( $#files == 0 )); then
+      zle -M 'no matches found'
+      return 1
+    fi
+    $selector && LBUFFER+=$REPLY
+
+  elif [[ $disable_recursive = 0 ]]; then
+    local tail=${${(Z:n:)LBUFFER}[-1]}
+    eval "files=($tail(NoN))"
+
+    if (( $#files == 0 )); then
+      zle -M 'no matches found'
+      return 1
+    fi
+
+    if [[ $c = / ]] || [[ ( $c = \' || $c = \" ) && ${tail[-2]} = / ]] ; then
+      prefix=$tail
+    fi
+
+    $selector && LBUFFER=${LBUFFER:0:-$#tail}$REPLY
+
+  else
+    local found c tail=${${(Z:n:)LBUFFER}[-1]}
+    local -i ntail=$#tail
+
+    c=${tail[-1]}
+    # is directory: xxx/ or 'xxx/' or "xxx/"
+    if [[ $c = / ]] || [[ ( $c = \' || $c = \" ) && ${tail[-2]} = / ]] ; then
+      eval "dirs=($tail(NoN))"
+      if (( $#dirs != 0 )) ; then
+        found=x
+      else
+        eval "dirs=($tail*(NoN))"
+      fi
     else
       eval "dirs=($tail*(NoN))"
     fi
-  else
-    eval "dirs=($tail*(NoN))"
-  fi
 
-  if (( $#dirs == 1 )); then
-    files=($dirs**/*($globqualifiers))
-    if (( $#files == 0 )) ; then
-      files=($dirs($globqualifiers))
-      tail=$dirs[1]
-    elif [[ ${dirs[1][-1]} = / ]] ; then
-      tail=$dirs[1]
-    else
-      tail=$dirs[1]/
-    fi
-    found=x
-  elif (( $#dirs > 1 )); then
-    local -i n=0
-    for dir in $dirs ; do
-      files+=($dir**/*($globqualifiers))
-      if (( n == $#files )) ; then
-        files+=($dir($globqualifiers))
+    if (( $#dirs == 1 )); then
+      files=($dirs**/*($glob_qualifiers))
+      if (( $#files == 0 )) ; then
+        files=($dirs($glob_qualifiers))
+        tail=$dirs[1]
+      elif [[ ${dirs[1][-1]} = / ]] ; then
+        tail=$dirs[1]
+      else
+        tail=$dirs[1]/
       fi
-      n=$#files
-    done
+      found=x
+    elif (( $#dirs > 1 )); then
+      local -i n=0
+      for dir in $dirs ; do
+        files+=($dir**/*($glob_qualifiers))
+        if (( n == $#files )) ; then
+          files+=($dir($glob_qualifiers))
+        fi
+        n=$#files
+      done
 
-    [[ -z $found ]] || tail=''
-  fi
-
-  if (( $#files == 0 )); then
-    zle -M 'not matches found'
-    return 1
-  fi
-
-  if [[ -n $found ]]; then
-    query=(-q $tail)
-  else
-    local head=$tail:h
-    until [[ -d $head ]]; do
-      head=$head:h
-    done
-
-    if [[ $head != '.' ]]; then
-      query=(-q $head)
+      [[ -z $found ]] || tail=''
     fi
+
+    if (( $#files == 0 )); then
+      zle -M 'not matches found'
+      return 1
+    fi
+
+    if [[ -n $found ]]; then
+      prefix=$tail
+    else
+      local head=$tail:h
+      until [[ -d $head ]]; do
+        head=$head:h
+      done
+
+      if [[ $head != '.' ]]; then
+        prefix=$head
+      fi
+    fi
+
+    $selector && LBUFFER=${LBUFFER:0:-$ntail}$REPLY
   fi
 
-  output=${(j: :)${(qf)"$(fzf +s $query <<<${(F)files})"}} && LBUFFER=${LBUFFER:0:-$ntail}$output
-fi
+  zle redisplay
+}
 
-zle redisplay
+jln-fzf-files "$@"
