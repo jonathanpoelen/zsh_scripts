@@ -19,17 +19,14 @@
 # Add the following line for auto-completion:
 # _comps[each]=_precommand
 
-local -i iargs=${@[(ie)--]} ecmd=1
-local args=
+local -i iargs=${@[(ie)--]}
+local cmd=${(q)1}
 if (( $iargs > $# )); then
   iargs=1
-else
-  ecmd=iargs-1
-  if (( $iargs > 2 )); then
-    args="${(q)${@[2,$ecmd]}}"
-  fi
+elif (( $iargs > 2 )); then
+  cmd+=' '${(q)${@[2,$iargs-1]}}
 fi
 
 for f in $@[$iargs+1,-1]; do
-  eval "$1 $args ${(q)f}"
+  eval "$cmd ${(q)f}"
 done
