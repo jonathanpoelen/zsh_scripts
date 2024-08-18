@@ -3,11 +3,15 @@
 # Start an interactive sub-shell and inserts the result
 # of a command under the cursor position
 
-emulate -L zsh
-
 autoload -U read-from-minibuffer
 
-local REPLY
-read-from-minibuffer 'command: '
-[[ -z $REPLY ]] && return
-LBUFFER+=$REPLY
+jln-insert-command() {
+  emulate -L zsh
+
+  local REPLY
+  read-from-minibuffer 'command: '
+  [[ -z $REPLY ]] && return
+  LBUFFER+=$REPLY
+}
+
+jln-insert-command

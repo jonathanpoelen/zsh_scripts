@@ -12,4 +12,8 @@ _duration_run() {
   time $@
 }
 
-jln-unalias-exec 0 1 _duration_run $@
+duration() {
+  jln-unalias-exec 0 1 _duration_run $@
+}
+
+duration $@

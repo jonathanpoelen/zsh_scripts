@@ -22,47 +22,52 @@
 #   zstyle :jln-pick-column mode column
 #   bindkey '\e=' jln-pick-column
 
-emulate -L zsh
-
-local REPLY buf mode fzfargs
-
 autoload -U read-from-minibuffer
-read-from-minibuffer 'command: '
-[[ -z $REPLY ]] && return
 
-zstyle -s :$WIDGET fzf-args fzfargs
-local buf=$(eval "$REPLY" | fzf $=fzfargs)
-[[ -z $buf ]] && return
+jln-pick() {
+  emulate -L zsh
 
-zstyle -s :$WIDGET mode mode || mode=line
-if [[ $mode = 'filter'* ]]; then
-  zstyle -s :$WIDGET filter REPLY || read-from-minibuffer 'filter: '
-  eval $REPLY
-  LBUFFER+=$REPLY
-elif [[ $mode = 'line' ]]; then
-  buf=(${(q)${(f)buf}})
-  LBUFFER+="${(j: :)buf}"
-else
-  local -a view a ns
-  local -i len n
-  while read -A a ; do
-    (( ++n > 5 )) && break
-    len=$#a;
+  local REPLY buf mode fzfargs
+
+  read-from-minibuffer 'command: '
+  [[ -z $REPLY ]] && return
+
+  zstyle -s :$WIDGET fzf-args fzfargs
+  local buf=$(eval "$REPLY" | fzf $=fzfargs)
+  [[ -z $buf ]] && return
+
+  zstyle -s :$WIDGET mode mode || mode=line
+  if [[ $mode = 'filter'* ]]; then
+    zstyle -s :$WIDGET filter REPLY || read-from-minibuffer 'filter: '
+    eval $REPLY
+    LBUFFER+=$REPLY
+  elif [[ $mode = 'line' ]]; then
+    buf=(${(q)${(f)buf}})
+    LBUFFER+="${(j: :)buf}"
+  else
+    local -a view a ns
+    local -i len n
+    while read -A a ; do
+      (( ++n > 5 )) && break
+      len=$#a;
+      for (( i=1 ; i <= len ; ++i )); do
+        [[ -z "${view[$i]}" ]] && view[i]=$'\e[32m'$i$'\e[0m: '
+        view[i]+="${(q)a[$i]}  "
+      done
+    done <<<"$buf"
+
+    ns=(${${(f)"$(fzf $=fzfargs <<<${(F)view})"}/:*})
+    buf=(${(f)buf})
+    len=$#buf
     for (( i=1 ; i <= len ; ++i )); do
-      [[ -z "${view[$i]}" ]] && view[i]=$'\e[32m'$i$'\e[0m: '
-      view[i]+="${(q)a[$i]}  "
+      view=(${(z)buf[i]})
+      for n in $ns ; do
+        LBUFFER+="${(q)view[n]} "
+      done
     done
-  done <<<"$buf"
+  fi
 
-  ns=(${${(f)"$(fzf $=fzfargs <<<${(F)view})"}/:*})
-  buf=(${(f)buf})
-  len=$#buf
-  for (( i=1 ; i <= len ; ++i )); do
-    view=(${(z)buf[i]})
-    for n in $ns ; do
-      LBUFFER+="${(q)view[n]} "
-    done
-  done
-fi
+  zle redisplay
+}
 
-zle redisplay
+jln-pick
