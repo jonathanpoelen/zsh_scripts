@@ -11,7 +11,7 @@ for f in "$@" ; do
       *.zst)             unzstd "$f"     ;;
       *.tar)             tar xf "$f"     ;;
       *.tar.bz2|*.tbz2)  tar xjf "$f"    ;;
-      *.tar.xz)          tar xJf "$f"    ;;
+      *.tar.xz|*.tar.lz) tar xJf "$f"    ;;
       *.bz2)             bunzip2 "$f"    ;;
       *.Z)               uncompress "$f" ;;
       *.7z)              7z x "$f"       ;;
