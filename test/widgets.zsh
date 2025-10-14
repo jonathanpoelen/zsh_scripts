@@ -83,6 +83,8 @@ if test_function jln-forward-arg ; then
   test '' 'echo ${cursor}abc cde fgh'   'echo abc ${cursor}cde fgh'
   test '' 'echo ${cursor}  abc cde'     'echo   ${cursor}abc cde'
   test '' 'echo "a${cursor} b"   cde'   'echo "a b"   ${cursor}cde'
+  test '' 'echo ${cursor}abc'           'echo abc${cursor}'
+  test '' 'echo ${cursor}abc '          'echo abc ${cursor}'
   test '' 'echo abc${cursor}'           'echo abc${cursor}'
   test '' 'echo abc${cursor} '          'echo abc ${cursor}'
   test '' 'echo abc ${cursor}'          'echo abc ${cursor}'
@@ -98,6 +100,8 @@ if test_function jln-forward-arg ; then
 fi
 
 if test_function jln-backward-arg; then
+  test '' 'echo abc${cursor}'           'echo ${cursor}abc'
+  test '' 'echo abc ${cursor}'          'echo ${cursor}abc '
   test '' 'echo abc${cursor} cde fgh'   'echo ${cursor}abc cde fgh'
   test '' 'echo a${cursor}bc cde fgh'   'echo ${cursor}abc cde fgh'
   test '' 'echo ${cursor}abc cde fgh'   '${cursor}echo abc cde fgh'

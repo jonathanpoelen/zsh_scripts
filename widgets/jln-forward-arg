@@ -5,35 +5,32 @@
 
 emulate -L zsh -o extendedglob
 
-local words lwords pat
-local -i remaining skip iword
+local words pat
 
-words=(${(Z:n:)BUFFER})
-lwords=(${(Z:n:)LBUFFER})
-iword=$#lwords
-skip=$((${#words[$#lwords]} - ${#lwords[-1]}))
+# move cursor to the beginning of the parameter
+CURSOR=${#LBUFFER%%${${(Z:n:)LBUFFER}[-1]}}
 
-# in the middle of a shell word
-if (( skip != 0 )); then
-  remaining=${#RBUFFER[skip+1,-1]##[[:space:]]#}
-# between two shell words
-elif [[ $RBUFFER = [[:space:]]* ]]; then
-  remaining=${#RBUFFER##[[:space:]]#}
-# on the start of a shell word
-else
-  remaining=${#RBUFFER[${#words[$#lwords+1]}+1,-1]##[[:space:]]#}
-  ((++iword))
-fi
+words=(${(Z:n:)RBUFFER})
 
 if (( NUMERIC > 1 )); then
-  local -i numeric=NUMERIC+iword
-  if (( numeric > $#words )); then
-    numeric=$#words+1
+  local -i numeric=$NUMERIC i
+  # between space, decrement the counter to consider spaces as a parameter
+  if [[ $BUFFER[$CURSOR+1] = [[:space:]] ]]; then
+    ((--numeric))
   fi
-  for ((iword+=1; iword<numeric; ++iword)); do
-    pat+=${(q)words[iword]}'[[:space:]]#'
-  done
-  eval remaining='${#RBUFFER[$#RBUFFER-remaining+1,-1]##'$pat'}'
-fi
 
-CURSOR+=$#RBUFFER-remaining
+  if (( numeric >= $#words )); then
+    CURSOR=$#BUFFER
+  else
+    for (( i=1; i <= numeric; ++i )); do
+      pat+='${words['$i']}[[:space:]]#'
+    done
+    eval CURSOR+='${#RBUFFER}-${#RBUFFER##[[:space:]]#'$pat'}'
+  fi
+# between space, skip spaces
+elif [[ $BUFFER[$CURSOR+1] = [[:space:]] ]]; then
+  CURSOR+=${#RBUFFER}-${#RBUFFER##[[:space:]]#}
+# skip current parameter and spaces
+else
+  CURSOR+=${#RBUFFER}-${#RBUFFER##${words[1]}[[:space:]]#}
+fi
