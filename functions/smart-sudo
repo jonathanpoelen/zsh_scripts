@@ -9,7 +9,7 @@
 #
 # sudo replacement:
 # alias sudo=smart-sudo
-# compdef _sudo smart-sudo
+# compdef smart-sudo=sudo
 
 autoload -U jln-unalias-exec
 

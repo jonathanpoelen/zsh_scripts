@@ -14,7 +14,7 @@ zle -N a-widget
 zle -N an-another-widget
 # ...
 
-bindkey bindkey '^[^K' jln-kill-arg # bind a widget on ctrl+alt+k
+bindkey bindkey '^[^K' jln-kill-arg  # bind a widget on ctrl+alt+k
 ```
 
 
@@ -23,7 +23,7 @@ bindkey bindkey '^[^K' jln-kill-arg # bind a widget on ctrl+alt+k
 ## jln-glob
 
 ```zsh
-alias ng='jln-glob numeric ; jln-glob-pop' # sort numerically
+alias ng='jln-glob numeric ; jln-glob-pop'  # sort numerically
 
 # 3 files listed in lexicographic order
 echo *
@@ -38,16 +38,15 @@ ng echo *
 
 ```zsh
 alias l='ls -CF'
-smart-sudo l # run sudo ls -CF
+smart-sudo l  # run sudo ls -CF
 ```
 
 ### Sudo replacement
 
 ```zsh
 # in ~/.zshrc
-alias sudo='nocorrect smart-sudo'
-# or alias sudo=smart-sudo
-compdef _sudo smart-sudo
+alias sudo='nocorrect smart-sudo'  # or alias sudo=smart-sudo
+compdef smart-sudo=sudo
 ```
 
 ## jln-transpose-arg
