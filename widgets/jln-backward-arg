@@ -5,20 +5,20 @@
 
 emulate -L zsh -o extendedglob
 
-local lwords pat
+local words pat
 
-lwords=(${(Z:n:)LBUFFER})
+words=(${(Z:n:)LBUFFER})
 
 if (( NUMERIC > 1 )); then
-  if (( NUMERIC > $#lwords )); then
+  if (( NUMERIC > $#words )); then
     CURSOR=0
   else
-    local -i end=$#lwords i
-    for ((i=end-NUMERIC+1; i <= end; ++i)); do
-      pat+=${(q)lwords[i]}'[[:space:]]#'
+    local -i end=$#words i
+    for (( i=end-NUMERIC+1; i <= end; ++i )); do
+      pat+='${words['$i']}[[:space:]]#'
     done
     eval CURSOR='${#LBUFFER%%'$pat'}'
   fi
 else
-  CURSOR=${#LBUFFER%%${lwords[-1]}[[:space:]]#}
+  CURSOR=${#LBUFFER%%${words[-1]}[[:space:]]#}
 fi
