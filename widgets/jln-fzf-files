@@ -6,7 +6,8 @@
 #
 # If a parameter is below the cursor,
 # it will be expanded and then used as a file list.
-# If the cursor is at the end of the parameter * will be added before.
+# If the cursor is at the end of the parameter, * will be inserted
+# if the parameter does not end with a pattern.
 #
 # The default pattern matches all files not recursively,
 # but glob qualifier can be configured as
@@ -30,7 +31,7 @@
 # If the files are expanded using a parameter under the cursor,
 # a prefix can be added to the fzf query.
 # The prefix search is rudimentary and
-# may be truncated if it contains '?*<({['.
+# may be truncated if it contains '?*<({[#'.
 #
 #   # add prefix in fzf query
 #   zstyle :jln-fzf-files insert-prefix 1
@@ -110,9 +111,9 @@ else
 
   # if positioned at the end of the parameter
   if (( $start_cursor_param + $#word == $CURSOR )); then
-    # if does not end with globbing, insert *
-    if [[ $word[-1] != ['?*>)'] ]] \
-    || ( [[ $word[-1] == ['?*)'] ]] && (( ($#word - ${#word%%'\'#['?*)']}) % 2 == 0 )) ) \
+    # if does not end with globbing (?, *, a#, a##, *(/), <n-m>), insert *
+    if [[ $word[-1] != ['?*>)#'] ]] \
+    || ( [[ $word[-1] == ['?*)#'] ]] && (( ($#word - ${#word%%'\'#['?*)#']}) % 2 == 0 )) ) \
     || ( [[ $word[-2] == '\' && $word[-1] == '>' ]] )
     then
       if [[ $recursive_directory == 1 ]]; then
@@ -148,7 +149,7 @@ else
     # extract left chars
     prefix=${(Q)BUFFER:$start_cursor_param:$((CURSOR-start_cursor_param))}
     # remove characters if there is a pattern
-    prefix=${prefix/[?*<]*/}
+    prefix=${prefix/[?*<#]*/}
     # not a prefix
     if [[ $files[1] != $prefix* ]]; then
       # remove characters if there is a glob qualifier
