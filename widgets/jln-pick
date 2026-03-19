@@ -1,26 +1,26 @@
 #!/usr/bin/env zsh
 
-# Launches a minishell so the result inserted as a parameter.
+# Runs a minishell, the output of which is passed as a parameter.
 #
-# modes available:
-# - line: each line is a parameter (default)
-# - column: each line then filter by column
-# - filter: each line then minishell that to manipulate $buf string.
-#           Final result must be in $REPLY
+# Modes available:
+# - line: Each line is a parameter (default)
+# - column: Filter by column
+# - filter: Uses an expression that manipulates the variable $buf and populate $REPLY.
+#           This expression is obtained either through a configuration (see below)
+#           or via a minishell when no configuration exists.
 #
-# other options:
-# - filter expression: use an expression instead of open a minishell
+# Other options:
+# - ifs string: Field separator used in column mode (default is $IFS)
+# - filter expression: Use an expression instead of open a minishell.
+#                      Final result must be in $REPLY.
 # - fzf-args string
 #
-#   zstyle :jln-pick mode filter
-#   zstyle :jln-pick filter 'REPLY=${(j:,:)${(f)buf}}' # comma-separated result
-#
-# Note also that the style is looked up based on the widget name, so you
-# can bind this function to different widgets to use different patterns:
-#
-#   zle -N jln-pick-column jln-pick
-#   zstyle :jln-pick-column mode column
-#   bindkey '\e=' jln-pick-column
+# Example:
+#   # create and config a new widget named pick-list
+#   zle -N pick-list jln-pick
+#   zstyle :pick-list mode filter
+#   zstyle :pick-list filter 'REPLY=${(j:,:)${(f)buf}}' # comma-separated result
+#   bindkey '\e=' pick-column
 
 autoload -U read-from-minibuffer
 
@@ -33,36 +33,40 @@ jln-pick() {
   [[ -z $REPLY ]] && return
 
   zstyle -s :$WIDGET fzf-args fzfargs
-  local buf=$(eval "$REPLY" | fzf $=fzfargs)
+  local buf=$(eval "$REPLY" | fzf -m $=fzfargs)
   [[ -z $buf ]] && return
 
   zstyle -s :$WIDGET mode mode || mode=line
-  if [[ $mode = 'filter'* ]]; then
+  if [[ $mode = 'filter' ]]; then
     zstyle -s :$WIDGET filter REPLY || read-from-minibuffer 'filter: '
     eval $REPLY
     LBUFFER+=$REPLY
   elif [[ $mode = 'line' ]]; then
     buf=(${(q)${(f)buf}})
     LBUFFER+="${(j: :)buf}"
-  else
+  else # $mode = column
     local -a view a ns
-    local -i len n
-    while read -A a ; do
+    local -i len n i
+    local ifs
+    zstyle -s :$WIDGET ifs ifs || ifs=$IFS
+
+    # extracts the columns of the first 5 lines
+    <<<$buf while IFS=$ifs read -A a ; do
       (( ++n > 5 )) && break
       len=$#a;
       for (( i=1 ; i <= len ; ++i )); do
         [[ -z "${view[$i]}" ]] && view[i]=$'\e[32m'$i$'\e[0m: '
         view[i]+="${(q)a[$i]}  "
       done
-    done <<<"$buf"
+    done
 
-    ns=(${${(f)"$(fzf $=fzfargs <<<${(F)view})"}/:*})
-    buf=(${(f)buf})
-    len=$#buf
-    for (( i=1 ; i <= len ; ++i )); do
-      view=(${(z)buf[i]})
+    # select the column numbers to use (starts with '{number}:')
+    ns=(${${(f)"$(fzf -m $=fzfargs <<<${(F)view})"}/:*})
+
+    # add columns to BUFFER
+    <<<$buf while IFS=$ifs read -A a ; do
       for n in $ns ; do
-        LBUFFER+="${(q)view[n]} "
+        LBUFFER+="${(q)a[n]} "
       done
     done
   fi
