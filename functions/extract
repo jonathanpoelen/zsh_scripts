@@ -17,10 +17,10 @@ for f in "$@" ; do
       *.bz2)             bunzip2 "$f"    ;;
       *.Z)               uncompress "$f" ;;
       *.7z)              7z x "$f"       ;;
-      *.deb) /usr/bin/ar vx "$f" ;;
-      *) echo "$0: '$f' cannot be extracted" >&2 ; return 2;;
+      *.deb)             /usr/bin/ar vx "$f" ;;
+      *) echo "$0: '$f' has an unsupported extension" >&2 ; return 2;;
     esac
   else
-    echo "$0: '$f' is not a valid file" >&2 ; return 1
+    echo "$0: '$f' is not a regular file" >&2 ; return 1
   fi
 done
