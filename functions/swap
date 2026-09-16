@@ -5,13 +5,13 @@
 emulate -L zsh -o extendedglob
 
 if [[ $# -ne 2 ]]; then
-  echo "$0 only expects 2 arguments" >&2
+  echo -E "$0 only expects 2 arguments" >&2
   return 3
 elif [[ ! -a $2 ]]; then
-  echo "$0: '$2': No such file or directory" >&2
+  echo -E "$0: '$2': No such file or directory" >&2
   return 2
 elif [[ ! -a $1 ]]; then
-  echo "$0: '$1': No such file or directory" >&2
+  echo -E "$0: '$1': No such file or directory" >&2
   return 1
 fi
 

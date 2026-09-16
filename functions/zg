@@ -19,7 +19,7 @@ zg() {
       (j) j=${OPTARG:+\($OPTARG\)} ;;
       (C) C=${OPTARG//(#m)[[\/\'\"\\]/\\$MATCH} ;
           if [[ -z $C ]]; then
-            echo $0: Missing color pattern >&2
+            echo -E $0: Missing color pattern >&2
             return 2
           fi
           ((M-=1)) ;;
@@ -33,7 +33,7 @@ zg() {
       (x) x=0 ;;
       (n) n=\" ;;
       (p) p=$OPTARG ;;
-      (h|\?) echo 'zsh grep
+      (h|\?) echo -E 'zsh grep
 zg [-e cmd | -r | -R] [-d zshopt] [-j zshopt] [-C pattern_for_color ] [-p cmd] [-MXVvavsnxh] [--] pattern [{ files | expression | command ... }]
  -e: execute command
  -r saved array in the parameter `reply`
@@ -69,7 +69,7 @@ zg [-e cmd | -r | -R] [-d zshopt] [-j zshopt] [-C pattern_for_color ] [-p cmd] [
   local pat=${@[$OPTIND]//(#m)[\/\'\"]/\\$MATCH}
 
   if [[ -z $pat ]] && [[ -z $C ]]; then
-    echo $0: Missing or empty pattern >&2
+    echo -E $0: Missing or empty pattern >&2
     return 2
   fi
 

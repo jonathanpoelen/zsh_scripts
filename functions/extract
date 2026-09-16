@@ -18,9 +18,9 @@ for f in "$@" ; do
       *.Z)               uncompress "$f" ;;
       *.7z)              7z x "$f"       ;;
       *.deb)             /usr/bin/ar vx "$f" ;;
-      *) echo "$0: '$f' has an unsupported extension" >&2 ; return 2;;
+      *) echo -E "$0: '$f' has an unsupported extension" >&2 ; return 2;;
     esac
   else
-    echo "$0: '$f' is not a regular file" >&2 ; return 1
+    echo -E "$0: '$f' is not a regular file" >&2 ; return 1
   fi
 done

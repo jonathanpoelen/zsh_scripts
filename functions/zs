@@ -38,7 +38,7 @@ zs()
         (*) prefix+='${'$prefix; suffix+='['$tmp']}' ;;
       esac ;;
       (-I) iout=0 ; i+=-1 ;;
-      (-h) echo "$0: [{s|gs|ns|gns|d|g} pattern replacement [i nth]] [P progname] [z expr] [e|t|n|-I] [p paramexpansion] [{-o|-u} file] [[f] file] ... | -- file ...
+      (-h) echo -E "$0: [{s|gs|ns|gns|d|g} pattern replacement [i nth]] [P progname] [z expr] [e|t|n|-I] [p paramexpansion] [{-o|-u} file] [[f] file] ... | -- file ...
 - s: replace
 - gs: global replace
 - ns: replace non-greedy
@@ -70,7 +70,7 @@ zs()
   fi
 
   if [[ -n $out ]] && (( $iout == 1 )); then
-    echo "$0 overwrite $out? "
+    echo -E "$0 overwrite $out? "
     read -q || return 1
   fi
 
