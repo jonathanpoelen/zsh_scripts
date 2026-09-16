@@ -2,7 +2,7 @@
 
 # swap two files or directories
 
-emulate -L zsh -o extendedglob
+emulate -L zsh
 
 if [[ $# -ne 2 ]]; then
   echo -E "$0 only expects 2 arguments" >&2
@@ -14,9 +14,6 @@ elif [[ ! -a $1 ]]; then
   echo -E "$0: '$1': No such file or directory" >&2
   return 1
 fi
-
-1=${1%%\/#}
-2=${2%%\/#}
 
 local tmp=$1:h/$1:t-$$-${(%):-%D{%s%N}}.tmp
 
