@@ -1,5 +1,7 @@
 #!/usr/bin/env zsh
 
+setopt localoptions errreturn
+
 for f in "$@" ; do
   if [[ -f $f ]] ; then
     case "$f" in
